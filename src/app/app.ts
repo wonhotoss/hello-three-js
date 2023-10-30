@@ -1,54 +1,56 @@
-import { Color, PerspectiveCamera, Scene, Vector3, WebGLRenderer, Clock } from 'three';
-import { Brick } from './brick';
+import { Color, PerspectiveCamera, Scene, Vector3, WebGLRenderer, Clock, AmbientLight, DirectionalLight } from 'three';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class App {
-  private readonly timer = new Clock();
-  private readonly scene = new Scene();
-  // private readonly camera = new PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 10000);
-  private readonly camera = new PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
-  private readonly renderer = new WebGLRenderer({
-    antialias: true,
-    canvas: document.getElementById('main-canvas') as HTMLCanvasElement,
-  });
-
-  private brick: Brick;
-
-  constructor() {
-    this.brick = new Brick(100, new Color('rgb(255,0,0)'));
-    this.scene.add(this.brick);
-
-    let loader = new GLTFLoader();
-
-    loader.load("gltf_logo/Airplane.gltf", (gltf) => {
-        console.log(gltf);
-        console.log(this.scene.add(gltf.scene));
+    private readonly timer = new Clock();
+    private readonly scene = new Scene();  
+    private readonly camera = new PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+    private readonly renderer = new WebGLRenderer({
+        antialias: true,
+        canvas: document.getElementById('main-canvas') as HTMLCanvasElement,
     });
 
-    // this.camera.position.set(200, 200, 200);
-    this.camera.position.set(0, 0, 15);
-    // this.camera.lookAt(new Vector3(0, 0, 0));
+    constructor() {
+        this.camera.position.set(0, 0, 500);
 
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.renderer.setClearColor(new Color('rgb(0,0,0)'));
+        this.renderer.setSize(innerWidth, innerHeight);
+        this.renderer.setClearColor(new Color('rgb(0,0,0)'));
 
-    this.render();
+        let light = new AmbientLight(0xffffff);
+        light.intensity = 1;
 
-    (window as any)['app'] = this;
-  }
+        let dlight = new DirectionalLight(0xffffff, 3);
+        this.scene.add(light, dlight);
 
-  private adjustCanvasSize() {
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.camera.aspect = innerWidth / innerHeight;
-    this.camera.updateProjectionMatrix();
-  }
+        let loader = new GLTFLoader();
 
-  private render() {
-    const delta = this.timer.getDelta();
+        loader.load("gltf_logo/Rocket.gltf", (gltf) => {            
+            console.log(this.scene.add(gltf.scene));
 
-    this.renderer.render(this.scene, this.camera);
-    requestAnimationFrame(() => this.render());
-    this.adjustCanvasSize();
-    this.brick.rotateY(3 * delta);
-  }
+            this.scene.children[2].children[0].rotation.set(-1.57, 0, 0);
+
+            this.render();
+        });
+
+        (window as any)['app'] = this;
+    }
+
+    private adjustCanvasSize() {
+        this.renderer.setSize(innerWidth, innerHeight);
+        this.camera.aspect = innerWidth / innerHeight;
+        this.camera.updateProjectionMatrix();
+    }
+
+    private render() {
+        const delta = this.timer.getDelta();
+
+        let r = this.scene.children[2].children[0].rotation;
+        r.set(-1.57, r.y, (r.z + delta) % (2 * Math.PI));
+
+        // this.scene.children[2].children[0].rotation.set(-1.57, 0, 0);
+
+        this.renderer.render(this.scene, this.camera);
+        requestAnimationFrame(() => this.render());
+        this.adjustCanvasSize();        
+    }
 }
